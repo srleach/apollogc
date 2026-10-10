@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apollo 11 AGC</title>
+<meta name="description" content="The Apollo 11 guidance computer software (Comanche 055 and Luminary 099), assembled from the original source and running in your browser on a WebAssembly build of the Virtual AGC CPU.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="title">
+    <h1>Apollo 11 Guidance Computer</h1>
+    <p id="build-line">Loading the flight software…</p>
+  </div>
+  <div class="vehicle" role="radiogroup" aria-label="Spacecraft">
+    <button role="radio" data-rope="Comanche055" aria-checked="true">
+      <strong>Columbia</strong><span>Command Module, Comanche 055</span>
+    </button>
+    <button role="radio" data-rope="Luminary099" aria-checked="false">
+      <strong>Eagle</strong><span>Lunar Module, Luminary 099</span>
+    </button>
+  </div>
+</header>
+
+<main class="console">
+  <section class="dsky" aria-label="DSKY display and keyboard">
+    <div class="dsky-upper">
+      <div class="lamps" id="lamps" aria-label="Caution and status lamps"></div>
+      <div class="el" id="el" aria-live="off">
+        <div class="el-row el-top">
+          <div class="el-cell">
+            <div class="tag tag-comp" id="comp-acty">COMP<br>ACTY</div>
+          </div>
+          <div class="el-cell">
+            <div class="tag on" id="tag-prog">PROG</div>
+            <div class="digits" data-field="prog"></div>
+          </div>
+        </div>
+        <div class="el-row el-top">
+          <div class="el-cell">
+            <div class="tag on" id="tag-verb">VERB</div>
+            <div class="digits" data-field="verb"></div>
+          </div>
+          <div class="el-cell">
+            <div class="tag on" id="tag-noun">NOUN</div>
+            <div class="digits" data-field="noun"></div>
+          </div>
+        </div>
+        <div class="bar"></div>
+        <div class="digits reg" data-field="r1"></div>
+        <div class="bar"></div>
+        <div class="digits reg" data-field="r2"></div>
+        <div class="bar"></div>
+        <div class="digits reg" data-field="r3"></div>
+      </div>
+    </div>
+    <div class="keypad" id="keypad">
+      <button class="k tall" data-key="VERB" style="grid-area:verb">VERB</button>
+      <button class="k tall" data-key="NOUN" style="grid-area:noun">NOUN</button>
+      <button class="k" data-key="+" style="grid-area:plus" aria-label="Plus">+</button>
+      <button class="k" data-key="-" style="grid-area:minus" aria-label="Minus">−</button>
+      <button class="k" data-key="0" style="grid-area:k0">0</button>
+      <button class="k" data-key="7" style="grid-area:k7">7</button>
+      <button class="k" data-key="4" style="grid-area:k4">4</button>
+      <button class="k" data-key="1" style="grid-area:k1">1</button>
+      <button class="k" data-key="8" style="grid-area:k8">8</button>
+      <button class="k" data-key="5" style="grid-area:k5">5</button>
+      <button class="k" data-key="2" style="grid-area:k2">2</button>
+      <button class="k" data-key="9" style="grid-area:k9">9</button>
+      <button class="k" data-key="6" style="grid-area:k6">6</button>
+      <button class="k" data-key="3" style="grid-area:k3">3</button>
+      <button class="k" data-key="CLR" style="grid-area:clr">CLR</button>
+      <button class="k" data-key="PRO" style="grid-area:pro">PRO</button>
+      <button class="k" data-key="KEYREL" style="grid-area:krel">KEY<br>REL</button>
+      <button class="k tall" data-key="ENTR" style="grid-area:entr">ENTR</button>
+      <button class="k tall" data-key="RSET" style="grid-area:rset">RSET</button>
+    </div>
+  </section>
+
+  <aside class="io" aria-label="Spacecraft interface">
+    <div class="io-head">
+      <h2>Spacecraft interface</h2>
+      <p>Every lamp is a bit the flight software drives on an output channel. Switches set input discretes the software reads.</p>
+    </div>
+    <div class="annunciators" id="annunciators"></div>
+    <div id="channels"></div>
+    <p class="io-source" id="io-source"></p>
+  </aside>
+</main>
+
+<section class="notes">
+  <div class="controls">
+    <button id="btn-restart" class="plain">Power cycle</button>
+    <label class="speed">Clock
+      <select id="speed">
+        <option value="1" selected>Real time</option>
+        <option value="2">2×</option>
+        <option value="10">10×</option>
+        <option value="0">Paused</option>
+      </select>
+    </label>
+    <span id="status" class="status"></span>
+  </div>
+  <div class="howto">
+    <div>
+      <h2>Try it</h2>
+      <p>Press <b>RSET</b> first to clear the RESTART lamp lit at power-on. Then key a verb and noun and press <b>ENTR</b>.</p>
+      <table class="recipes" id="recipes">
+        <tr><td><kbd>V35E</kbd></td><td>Lamp test: every lamp and segment on for five seconds (AGC warning then fades over about 20 seconds)</td></tr>
+        <tr><td><kbd>V16N36E</kbd></td><td>Monitor the mission clock (hours, minutes, seconds·100)</td></tr>
+        <tr><td><kbd>V37E00E</kbd></td><td>Change major mode to P00, the idle program</td></tr>
+        <tr><td><kbd>V05N09E</kbd></td><td>Show the alarm codes</td></tr>
+        <tr><td><kbd>V25N36E</kbd></td><td>Load a new clock time, one register at a time</td></tr>
+        <tr><td><kbd>V91E</kbd></td><td>Show the rope's bank checksums (press PRO to step)</td></tr>
+      </table>
+      <p class="hint">Tap a recipe to key it in. On a keyboard: digits, <kbd>V</kbd> verb, <kbd>N</kbd> noun, <kbd>Enter</kbd> ENTR, <kbd>C</kbd> CLR, <kbd>R</kbd> RSET, <kbd>K</kbd> KEY REL, <kbd>P</kbd> PRO, <kbd>+</kbd> <kbd>−</kbd>.</p>
+    </div>
+    <div>
+      <h2>What's running</h2>
+      <p>The software was assembled at build time from the AGC source in <a href="https://github.com/chrislgarry/Apollo-11">chrislgarry/Apollo-11</a> with the yaYUL assembler, then checked word for word against the Virtual AGC project's verified rope. The CPU is the Virtual AGC engine (yaAGC) compiled to WebAssembly, clocked at the real 85,333 memory cycles per second.</p>
+      <p>Nothing here is scripted: every digit and lamp is set by the 1969 code writing to the computer's output channels.</p>
+    </div>
+  </div>
+</section>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
